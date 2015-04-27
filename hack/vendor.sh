@@ -59,6 +59,16 @@ clone git github.com/go-fsnotify/fsnotify v1.0.4
 
 clone git github.com/go-check/check 64131543e7896d5bcc6bd5a76287eb75ea96c673
 
+clone git github.com/boltdb/bolt 8a2a9b2eb7123c41ea752bab494ff046909e9473 
+
+clone git github.com/endophage/go-tuf 8c4b01d280bcae1b1a871b3bbe4252da88276759
+
+clone git github.com/agl/ed25519 d2b94fd789ea21d12fac1a4443dd3a3f79cda72c
+
+clone hg code.google.com/p/go-sqlite 6e75c20f8fc4b936bccab88336915333ae165754
+
+clone git github.com/tent/canonical-json-go 96e4ba3a7613a1216cbd1badca4efe382adea337
+
 # get Go tip's archive/tar, for xattr support and improved performance
 # TODO after Go 1.4 drops, bump our minimum supported version and drop this vendored dep
 if [ "$1" = '--go' ]; then

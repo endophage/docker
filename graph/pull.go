@@ -1,9 +1,11 @@
 package graph
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/url"
 	"os"
@@ -19,7 +21,22 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/utils"
+
+	tufc "github.com/endophage/go-tuf/client"
+	tufd "github.com/endophage/go-tuf/data"
 )
+
+type Destination struct{}
+
+func (d *Destination) Write(p []byte) (int, error) {
+	return ioutil.Discard.Write(p)
+}
+
+func (d *Destination) Delete() error {
+	return nil
+}
+
+var keys []*tufd.Key = []*tufd.Key{}
 
 func getTufClient(name string) (*tufc.Client, error) {
 	remote, err := tufc.HTTPRemoteStore("http://localhost:4321/"+name, nil)
@@ -28,8 +45,8 @@ func getTufClient(name string) (*tufc.Client, error) {
 	}
 	local := tufc.MemoryLocalStore()
 	client := tufc.NewClient(local, remote)
-	client.Init(keys)
-	_, err := client.Update()
+	client.Init(keys, 1)
+	_, err = client.Update()
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +465,8 @@ func (s *TagStore) pullV2Tag(r *registry.Session, out io.Writer, endpoint *regis
 		log.Printf("unable to reach trust service, downloads cannot be verified for trust")
 	}
 
-	err = tufClient.Verify(tag, manifestBytes, len(manifestBytes))
+	dest := Destination{}
+	err = tufClient.Verify(tag, bytes.NewReader(manifestBytes), int64(len(manifestBytes)), &dest)
 	if err != nil {
 		log.Printf("Failed to verify %s:%s", repoInfo.RemoteName, tag)
 	}
