@@ -21,6 +21,21 @@ import (
 	"github.com/docker/docker/utils"
 )
 
+func getTufClient(name string) (*tufc.Client, error) {
+	remote, err := tufc.HTTPRemoteStore("http://localhost:4321/"+name, nil)
+	if err != nil {
+		return nil, err
+	}
+	local := tufc.MemoryLocalStore()
+	client := tufc.NewClient(local, remote)
+	client.Init(keys)
+	_, err := client.Update()
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
 type ImagePullConfig struct {
 	Parallel    bool
 	MetaHeaders map[string][]string
@@ -425,6 +440,17 @@ func (s *TagStore) pullV2Tag(r *registry.Session, out io.Writer, endpoint *regis
 	manifestBytes, manifestDigest, err := r.GetV2ImageManifest(endpoint, repoInfo.RemoteName, tag, auth)
 	if err != nil {
 		return false, err
+	}
+
+	tufClient, err := getTufClient(repoInfo.RemoteName)
+	if err != nil {
+		//TODO: log something about unable to reach trust source
+		log.Printf("unable to reach trust service, downloads cannot be verified for trust")
+	}
+
+	err = tufClient.Verify(tag, manifestBytes, len(manifestBytes))
+	if err != nil {
+		log.Printf("Failed to verify %s:%s", repoInfo.RemoteName, tag)
 	}
 
 	// loadManifest ensures that the manifest payload has the expected digest
