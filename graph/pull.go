@@ -2,6 +2,7 @@ package graph
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -36,10 +37,11 @@ func (d *Destination) Delete() error {
 	return nil
 }
 
-var keys []*tufd.Key = []*tufd.Key{}
-
 func getTufClient(name string) (*tufc.Client, error) {
-	remote, err := tufc.HTTPRemoteStore("http://localhost:4321/"+name, nil)
+	hexKey := "c416152f53260cc6ee733862cd03593d988de3d70791a775db8e5332878af9dd"
+	key, _ := hex.DecodeString(hexKey)
+	keys := []*tufd.Key{&tufd.Key{"ed25519", tufd.KeyValue{key}}}
+	remote, err := tufc.HTTPRemoteStore("https://192.168.200.40:4443/"+name, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -462,13 +464,14 @@ func (s *TagStore) pullV2Tag(r *registry.Session, out io.Writer, endpoint *regis
 	tufClient, err := getTufClient(repoInfo.RemoteName)
 	if err != nil {
 		//TODO: log something about unable to reach trust source
-		log.Printf("unable to reach trust service, downloads cannot be verified for trust")
-	}
+		log.Printf("unable to reach trust service, downloads cannot be verified for trust: %s", err.Error())
+	} else {
 
-	dest := Destination{}
-	err = tufClient.Verify(tag, bytes.NewReader(manifestBytes), int64(len(manifestBytes)), &dest)
-	if err != nil {
-		log.Printf("Failed to verify %s:%s", repoInfo.RemoteName, tag)
+		dest := Destination{}
+		err = tufClient.Verify(tag, bytes.NewReader(manifestBytes), int64(len(manifestBytes)), &dest)
+		if err != nil {
+			log.Printf("Failed to verify %s:%s", repoInfo.RemoteName, tag)
+		}
 	}
 
 	// loadManifest ensures that the manifest payload has the expected digest

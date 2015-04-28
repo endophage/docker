@@ -61,7 +61,7 @@ clone git github.com/go-check/check 64131543e7896d5bcc6bd5a76287eb75ea96c673
 
 clone git github.com/boltdb/bolt 8a2a9b2eb7123c41ea752bab494ff046909e9473 
 
-clone git github.com/endophage/go-tuf 378def626fbbc43fd713b3ad06f0115bd412a0fc
+clone git github.com/endophage/go-tuf bb90150fb7eac63494661ffba014182ff1be6dfa
 
 clone git github.com/agl/ed25519 d2b94fd789ea21d12fac1a4443dd3a3f79cda72c
 
