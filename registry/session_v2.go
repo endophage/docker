@@ -2,6 +2,7 @@ package registry
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +14,8 @@ import (
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/registry/api/v2"
 	"github.com/docker/docker/pkg/httputils"
+
+	tufu "github.com/endophage/go-tuf/util"
 )
 
 const DockerDigestHeader = "Docker-Content-Digest"
@@ -306,6 +309,24 @@ func (r *Session) PutV2ImageManifest(ep *Endpoint, imageName, tagName string, si
 	method := "PUT"
 	logrus.Debugf("[registry] Calling %q %s", method, routeURL)
 	req, err := r.reqFactory.NewRequest(method, routeURL, bytes.NewReader(signedManifest))
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	meta, err := tufu.GenerateFileMeta(bytes.NewReader(rawManifest), "sha256", "sha512")
+	logrus.Infof("$%s$", string(rawManifest))
+	logrus.Info("length", len(rawManifest))
+	if err != nil {
+		logrus.Error(err)
+	}
+	logrus.Info("imageName", imageName)
+	metaJSON, err := json.Marshal(meta)
+	_, err = client.Post("https://192.168.104.44:4444/"+imageName+"/hello", "application/json", bytes.NewReader(metaJSON))
+	if err != nil {
+		logrus.Error(err)
+	}
+
 	if err != nil {
 		return "", err
 	}

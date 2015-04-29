@@ -22,6 +22,7 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/registry"
 	"github.com/docker/docker/utils"
+	"github.com/docker/libtrust"
 
 	tufc "github.com/endophage/go-tuf/client"
 	tufd "github.com/endophage/go-tuf/data"
@@ -38,10 +39,10 @@ func (d *Destination) Delete() error {
 }
 
 func getTufClient(name string) (*tufc.Client, error) {
-	hexKey := "c416152f53260cc6ee733862cd03593d988de3d70791a775db8e5332878af9dd"
+	hexKey := "b356d813d0e344d06ca39365c58bc5b4727b89b6aa2c105bba457cc72c764b83"
 	key, _ := hex.DecodeString(hexKey)
 	keys := []*tufd.Key{&tufd.Key{"ed25519", tufd.KeyValue{key}}}
-	remote, err := tufc.HTTPRemoteStore("https://192.168.200.40:4443/"+name, nil)
+	remote, err := tufc.HTTPRemoteStore("https://192.168.104.44:4444/"+name, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -461,16 +462,29 @@ func (s *TagStore) pullV2Tag(r *registry.Session, out io.Writer, endpoint *regis
 		return false, err
 	}
 
-	tufClient, err := getTufClient(repoInfo.RemoteName)
+	sig, err := libtrust.ParsePrettySignature(manifestBytes, "signatures")
 	if err != nil {
-		//TODO: log something about unable to reach trust source
-		log.Printf("unable to reach trust service, downloads cannot be verified for trust: %s", err.Error())
+		logrus.Error(err)
 	} else {
-
-		dest := Destination{}
-		err = tufClient.Verify(tag, bytes.NewReader(manifestBytes), int64(len(manifestBytes)), &dest)
+		payload, err := sig.Payload()
+		logrus.Infof("$%s$", string(payload))
+		logrus.Info("length", len(payload))
 		if err != nil {
-			log.Printf("Failed to verify %s:%s", repoInfo.RemoteName, tag)
+			logrus.Error(err)
+		} else {
+			tufClient, err := getTufClient(repoInfo.RemoteName)
+			if err != nil {
+				//TODO: log something about unable to reach trust source
+				log.Printf("unable to reach trust service, downloads cannot be verified for trust: %s", err.Error())
+			} else {
+
+				dest := Destination{}
+				err = tufClient.Verify(tag, bytes.NewReader(payload), int64(len(payload)), &dest)
+				if err != nil {
+					log.Println("Error", err.Error())
+					log.Printf("Failed to verify %s:%s", repoInfo.RemoteName, tag)
+				}
+			}
 		}
 	}
 
