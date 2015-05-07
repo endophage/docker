@@ -39,10 +39,10 @@ func (d *Destination) Delete() error {
 }
 
 func getTufClient(name string) (*tufc.Client, error) {
-	hexKey := "b356d813d0e344d06ca39365c58bc5b4727b89b6aa2c105bba457cc72c764b83"
+	hexKey := "30820122300d06092a864886f70d01010105000382010f003082010a028201010094aaf6bdb3876650c0aae88b35d170396c5d3eac4590fde1d9e98438cbd3e2a79173a0822fb60fe3448526d7acbe9d653dc832e373993ef432d0607f342ff92591c93ac5311fb707467e1aec5a47ffce0237d008639b6a6b92e55ab3eca5981fa3f7d15242c959527eaf10011d2e7aa9e6c422250677b2f71b2ffb2fe3a2ff5133b3e29a8d8ccc3cc920d5632f54d5a8028302228a7b1aa0b9241c154bc97e777bdd2f61485a71fbd5d72261c25b5c3115c0d3cbc76e8a2d7a6c8ed798c57d7612b1816cf2a24ce1481904b03407725cf3a8b4dbfac4eb1457826960fd4c4be331ca8e2c04e82dfb58500f9d26f0a95782305fab546bb0e625aa635d92be74090203010001"
 	key, _ := hex.DecodeString(hexKey)
 	keys := []*tufd.Key{&tufd.Key{"ed25519", tufd.KeyValue{key}}}
-	remote, err := tufc.HTTPRemoteStore("https://192.168.104.44:4444/"+name, nil)
+	remote, err := tufc.HTTPRemoteStore("https://192.168.104.31:4444/"+name, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -467,8 +467,6 @@ func (s *TagStore) pullV2Tag(r *registry.Session, out io.Writer, endpoint *regis
 		logrus.Error(err)
 	} else {
 		payload, err := sig.Payload()
-		logrus.Infof("$%s$", string(payload))
-		logrus.Info("length", len(payload))
 		if err != nil {
 			logrus.Error(err)
 		} else {

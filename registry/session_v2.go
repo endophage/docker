@@ -315,14 +315,12 @@ func (r *Session) PutV2ImageManifest(ep *Endpoint, imageName, tagName string, si
 	}
 	client := &http.Client{Transport: tr}
 	meta, err := tufu.GenerateFileMeta(bytes.NewReader(rawManifest), "sha256", "sha512")
-	logrus.Infof("$%s$", string(rawManifest))
-	logrus.Info("length", len(rawManifest))
 	if err != nil {
 		logrus.Error(err)
 	}
-	logrus.Info("imageName", imageName)
+	logrus.Info("imageName ", imageName, " tag ", tagName)
 	metaJSON, err := json.Marshal(meta)
-	_, err = client.Post("https://192.168.104.44:4444/"+imageName+"/hello", "application/json", bytes.NewReader(metaJSON))
+	_, err = client.Post("https://192.168.104.31:4444/"+imageName+"/"+tagName, "application/json", bytes.NewReader(metaJSON))
 	if err != nil {
 		logrus.Error(err)
 	}
