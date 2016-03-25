@@ -95,10 +95,11 @@ ENV OSX_CROSS_COMMIT 8aa9b71a394905e6c5f4b59e2b97b87a004658a4
 RUN set -x \
 	&& export OSXCROSS_PATH="/osxcross" \
 	&& git clone https://github.com/tpoechtrager/osxcross.git $OSXCROSS_PATH \
-	&& ( cd $OSXCROSS_PATH && git checkout -q $OSX_CROSS_COMMIT) \
-	&& curl -sSL https://s3.dockerproject.org/darwin/${OSX_SDK}.tar.xz -o "${OSXCROSS_PATH}/tarballs/${OSX_SDK}.tar.xz" \
-	&& UNATTENDED=yes OSX_VERSION_MIN=10.6 ${OSXCROSS_PATH}/build.sh
+	&& ( cd $OSXCROSS_PATH && git checkout -q $OSX_CROSS_COMMIT) 
+#	&& curl -sSL https://s3.dockerproject.org/darwin/${OSX_SDK}.tar.xz -o "${OSXCROSS_PATH}/tarballs/${OSX_SDK}.tar.xz" \
 ENV PATH /osxcross/target/bin:$PATH
+COPY MacOSX10.11.sdk.tar.xz /osxcross/tarballs/MacOSX10.11.sdk.tar.xz
+RUN UNATTENDED=yes OSX_VERSION_MIN=10.6 /osxcross/build.sh
 
 # install seccomp: the version shipped in trusty is too old
 ENV SECCOMP_VERSION 2.3.0
